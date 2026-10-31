@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Food Menu App</title>
+    <style>
+        body { font-family: system-ui, sans-serif; max-width: 600px; margin: 40px auto; padding: 20px; }
+        .menu-item { border: 1px solid #ddd; padding: 15px; margin-bottom: 10px; border-radius: 8px; display: flex; justify-content: space-between; }
+        form { display: flex; gap: 10px; margin-bottom: 30px; }
+        input { padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
+        button { padding: 8px 15px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        .delete-btn { background: #dc3545; }
+    </style>
+</head>
+<body>
+    <h1>Restaurant Menu</h1>
+    
+    <form id="addFoodForm">
+        <input type="text" id="name" placeholder="Item (e.g. Masala Omelette)" required>
+        <input type="number" id="price" placeholder="Price" step="0.01" required>
+        <input type="text" id="category" placeholder="Category" required>
+        <button type="submit">Add Item</button>
+    </form>
+
+    <div id="menuList"></div>
+
+    <script>
+        const apiUrl = 'http://localhost:3000/api/menu';
+
+        // GET: Fetch and display items
+        async function fetchMenu() {
+            const response = await fetch(apiUrl);
+            const menu = await response.json();
+            const menuList = document.getElementById('menuList');
+            menuList.innerHTML = ''; 
+            
+            menu.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'menu-item';
+                div.innerHTML = `
+                    <div><strong>${item.name}</strong> - $${item.price} <em>(${item.category})</em></div>
+                    <button class="delete-btn" onclick="deleteItem('${item._id}')">Delete</button>
+                `;
+                menuList.appendChild(div);
+            });
+        }
+
+        // POST: Add a new item
+        document.getElementById('addFoodForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const newItem = {
+                name: document.getElementById('name').value,
+                price: parseFloat(document.getElementById('price').value),
+                category: document.getElementById('category').value
+            };
+
+            await fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(newItem)
+            });
+
+            document.getElementById('addFoodForm').reset();
+            fetchMenu();
+        });
+
+        // DELETE: Remove an item
+        async function deleteItem(id) {
+            await fetch(`${apiUrl}/${id}`, { method: 'DELETE' });
+            fetchMenu();
+        }
+
+        // Load menu when page opens
+        fetchMenu();
+    </script>
+</body>
+</html>
